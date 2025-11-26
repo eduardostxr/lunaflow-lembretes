@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
-import { Alert, Animated, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Animated, RefreshControl, Text, TouchableOpacity, View } from "react-native";
 import { AddTaskModal } from "../../components/Home/AddTaskModal";
 import { TaskCard } from "../../components/Home/TaskCard";
 import { useAuth } from "../../hooks/useAuth";
@@ -15,14 +15,17 @@ export default function Home() {
   const { 
     todaysTasks, 
     incompleteTasks, 
-    completedTasks, 
+    completedTasks,
+    loading,
     toggleComplete,
     deleteTask,
     saveTask,
+    refreshReminders,
   } = useTasks();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   
   const statsOpacity = scrollY.interpolate({
@@ -68,6 +71,12 @@ export default function Home() {
   const handleSaveTask = (task: Partial<Task>) => {
     saveTask(task);
     handleCloseModal();
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshReminders();
+    setRefreshing(false);
   };
 
   return (
@@ -118,6 +127,14 @@ export default function Home() {
           { useNativeDriver: false }
         )}
         scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#6b5a4a"
+            colors={["#6b5a4a"]}
+          />
+        }
       >
         {todaysTasks.length === 0 ? (
           <View style={styles.emptyState}>

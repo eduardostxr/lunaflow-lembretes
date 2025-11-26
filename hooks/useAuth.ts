@@ -1,7 +1,8 @@
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useState } from "react";
 import { Alert } from "react-native";
+import { removeAuthData, saveAuthData } from "../services/auth";
 import { auth } from "../services/firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 export function useAuth() {
   const [loading, setLoading] = useState(false);
@@ -13,7 +14,11 @@ export function useAuth() {
     }
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Salvar dados de autenticação no AsyncStorage
+      await saveAuthData(userCredential.user.uid, userCredential.user.email);
+      
       return true;
     } catch (error: any) {
       let message = "Erro ao logar";
@@ -38,6 +43,8 @@ export function useAuth() {
   const logout = async () => {
     try {
       await signOut(auth);
+      // Remover dados salvos do AsyncStorage
+      await removeAuthData();
     } catch (error) {
       Alert.alert("Erro", "Não foi possível sair.");
     }
